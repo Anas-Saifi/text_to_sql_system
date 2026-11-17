@@ -165,7 +165,7 @@ tr.total td{font-weight:650}
       <h2>Demo accounts</h2>
       <p class="muted">Each account is a database role with its own table access. Click one to fill the form.</p>
       <div class="cred-list" id="cred-list"></div>
-      <a class="link" href="evaluation_report.pdf" target="_blank" rel="noopener">View the evaluation report (PDF)</a>
+      <!-- <a class="link" href="evaluation_report.pdf" target="_blank" rel="noopener">View the evaluation report (PDF)</a> -->
     </div>
   </div>
 </section>
@@ -544,8 +544,8 @@ function evalPage() {
     h("div", { class: "card" }, h("div", { class: "title", style: "margin-bottom:8px" }, "Pass rate by category"),
       h("div", { class: "table-wrap", style: "max-height:none" }, h("table", {},
         h("thead", {}, h("tr", {}, h("th", {}, "Category"), h("th", { class: "num" }, "Passed"), h("th", {}, "Pass rate"))), h("tbody", {}, rows)))),
-    h("p", { class: "muted", style: "font-size:13px;margin:0" }, EVAL.note),
-    h("div", {}, h("a", { class: "btn primary", href: "evaluation_report.pdf", target: "_blank", rel: "noopener" }, "Open full report (PDF)")));
+    h("p", { class: "muted", style: "font-size:13px;margin:0" }, EVAL.note));
+    // h("div", {}, h("a", { class: "btn primary", href: "evaluation_report.pdf", target: "_blank", rel: "noopener" }, "Open full report (PDF)")));
 }
 function renderThread() {
   const t = $("thread"); t.replaceChildren();
