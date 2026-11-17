@@ -1,0 +1,14 @@
+{
+  "employee": "$2b$12$03Zj195PlyYApjgkTOJC7OAbv7Yr2vT4gNQo2H5g7lgSuKYRHRwV6",
+  "hr": "$2b$12$GCyBNhouLdxqv1.EchpfoODXfNlpdbCSo9nd6/9ab7aAEN0Wejukm",
+  "department_manager": "$2b$12$J8qEy0cFDD8kVoA0UcEbqOioePHHVKv8mo5J4ZCtPoDYmXDUDCpcG",
+  "finance": "$2b$12$ftnbRV.FXslKSVBQANzbieEx8oA./fCakvOnAaOPBPDOxU5SMOzHK",
+  "sales": "$2b$12$w2NFTLn511c2HRYUTCOC0uAGuPqNPe1CM8OHaQzFpJYShaUmj/qNm",
+  "procurement": "$2b$12$DWnlaBGXHGEiekBGyk9AD.sDeViGr7YBfgp6nbbZZchJPOtMX3HoS",
+  "operations": "$2b$12$412Iv2W47.ZRmCp8mmWH9ONWxfM4PjQcqNZ2NoKAKuk.y32cDhGfC",
+  "maintenance": "$2b$12$bo/Yq5EniiHYbX8/3K0O/e8UyHIj/nz57craenq7ygYmCi3afgI0W",
+  "quality": "$2b$12$NVYJ3XuvpePjoVltuX65JuF9gwL1KmZeA8mhHNm0O2V.tIb.GWCpC",
+  "project_manager": "$2b$12$AywQVuwwyf6/hV1GVhvUTeHtDRkAYKKThHaBV7K1PrrMatJAY2EfG",
+  "energy_analyst": "$2b$12$DQBjsEyMF9IiuR1JIKp0LOZ6OUMzNppHdQQNDK0ZDJoQAsAA6Iqqu",
+  "executive_readonly": "$2b$12$2Tl0BBdkxR5js3F00bpwQ.NMGj7gXlY0Bp0Dk3dQ2kYoBj07UYtoa"
+}

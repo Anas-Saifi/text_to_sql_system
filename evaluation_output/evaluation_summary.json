@@ -1,0 +1,310 @@
+{
+  "benchmark": "Siemens Energy Text-to-SQL, Input-Safety, RBAC and LLM-as-Judge Evaluation",
+  "version": "2.0",
+  "harness_revision": "3.0-audited",
+  "total_cases": 150,
+  "scored_cases": 150,
+  "excluded_cases": 0,
+  "overall_pass_rate_percent_of_scored": 94.0,
+  "overall_note": "Mixed bag of security, validation and SQL-quality cases. Read the sections below, not this number.",
+  "input_validation": {
+    "accuracy": 0.9924,
+    "n": 131,
+    "confusion_matrix": {
+      "valid": {
+        "valid": 89,
+        "invalid": 1,
+        "incomplete": 0
+      },
+      "invalid": {
+        "valid": 0,
+        "invalid": 31,
+        "incomplete": 0
+      },
+      "incomplete": {
+        "valid": 0,
+        "invalid": 0,
+        "incomplete": 10
+      }
+    },
+    "per_class": {
+      "valid": {
+        "precision": 1.0,
+        "recall": 0.9889,
+        "f1": 0.9944,
+        "support": 90
+      },
+      "invalid": {
+        "precision": 0.9688,
+        "recall": 1.0,
+        "f1": 0.9841,
+        "support": 31
+      },
+      "incomplete": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 10
+      }
+    },
+    "note": "RBAC-denied cases are excluded; they are scored at the database layer."
+  },
+  "valid_request_false_rejection_rate_percent": 1.11,
+  "prompt_injection": {
+    "cases": 15,
+    "end_to_end_block_rate_percent": 100.0,
+    "ci95_percent": [
+      79.6,
+      100.0
+    ],
+    "deterministic_regex_stage_recall_percent": 20.0,
+    "ai_validator_invocations": 12,
+    "note": "Measures input blocking only; it does not test whether an injection that slips through could alter generated SQL."
+  },
+  "sql_guard": {
+    "probes": 6,
+    "blocked": 6,
+    "block_rate_percent": 100.0
+  },
+  "rbac": {
+    "denied_cases": 19,
+    "db_denied_generated_sql": 19,
+    "agent_refusals": 0,
+    "guard_blocked": 0,
+    "bypass_or_review": 0,
+    "inconclusive": 0,
+    "setup_errors": 0,
+    "input_validator_blocked": 0,
+    "input_validator_accepted": 19,
+    "note": "Pass = PostgreSQL denied the MODEL-GENERATED SQL (or the agent refused / guard blocked). Input blocking is informational."
+  },
+  "sql_quality": {
+    "cases": 90,
+    "scored": 90,
+    "pass_deterministic": 62,
+    "pass_judge_review_only": 19,
+    "strict_pass_rate_percent": 68.89,
+    "strict_ci95_percent": [
+      58.7,
+      77.5
+    ],
+    "lenient_pass_rate_percent": 90.0,
+    "lenient_ci95_percent": [
+      82.1,
+      94.6
+    ],
+    "generated_cases": 108,
+    "execution_success_rate_percent": 100.0,
+    "generated_sql_read_only_guard_pass_rate_percent": 100.0,
+    "empty_reference_cases": 10,
+    "empty_reference_note": "These cannot be auto-passed; weak tests, consider rewriting so the reference returns rows.",
+    "mean_generation_latency_seconds": 6.3333
+  },
+  "deepeval": {
+    "framework": "DeepEval",
+    "judge_model": "deepseek-ai/deepseek-v4.1-flash-1017",
+    "judged_cases": 27,
+    "judged_cases_where_deterministic_failed": 27,
+    "passed_among_deterministic_failures": 19,
+    "mean_composite_score_0_to_1": 0.7238,
+    "mean_sql_semantic_correctness": 0.6463,
+    "mean_execution_result_correctness": 0.8185,
+    "metric_threshold": 0.75,
+    "result_metric_weight": 0.45,
+    "mean_judge_latency_seconds": 25.0885
+  },
+  "setup_errors": [],
+  "by_category": {
+    "aggregation": {
+      "total": 20,
+      "scored": 20,
+      "passed": 20,
+      "failed": 0,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 100.0,
+      "ci95_percent": [
+        83.9,
+        100.0
+      ],
+      "status_counts": {
+        "PASS_DETERMINISTIC": 20
+      }
+    },
+    "basic_sql": {
+      "total": 20,
+      "scored": 20,
+      "passed": 19,
+      "failed": 1,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 95.0,
+      "ci95_percent": [
+        76.4,
+        99.1
+      ],
+      "status_counts": {
+        "PASS_DETERMINISTIC": 15,
+        "PASS_JUDGE_REVIEW": 4,
+        "FAIL_DEEPEVAL": 1
+      }
+    },
+    "complex_sql": {
+      "total": 15,
+      "scored": 15,
+      "passed": 12,
+      "failed": 3,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 80.0,
+      "ci95_percent": [
+        54.8,
+        93.0
+      ],
+      "status_counts": {
+        "PASS_DETERMINISTIC": 9,
+        "FAIL_DEEPEVAL": 3,
+        "PASS_JUDGE_REVIEW": 3
+      }
+    },
+    "incomplete_input": {
+      "total": 10,
+      "scored": 10,
+      "passed": 10,
+      "failed": 0,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 100.0,
+      "ci95_percent": [
+        72.2,
+        100.0
+      ],
+      "status_counts": {
+        "PASS_INCOMPLETE_CLARIFICATION": 10
+      }
+    },
+    "invalid_input": {
+      "total": 10,
+      "scored": 10,
+      "passed": 10,
+      "failed": 0,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 100.0,
+      "ci95_percent": [
+        72.2,
+        100.0
+      ],
+      "status_counts": {
+        "PASS_INPUT_REJECTED": 10
+      }
+    },
+    "joins": {
+      "total": 25,
+      "scored": 25,
+      "passed": 22,
+      "failed": 3,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 88.0,
+      "ci95_percent": [
+        70.0,
+        95.8
+      ],
+      "status_counts": {
+        "PASS_DETERMINISTIC": 14,
+        "PASS_JUDGE_REVIEW": 8,
+        "FAIL_DEEPEVAL": 3
+      }
+    },
+    "prompt_injection": {
+      "total": 15,
+      "scored": 15,
+      "passed": 15,
+      "failed": 0,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 100.0,
+      "ci95_percent": [
+        79.6,
+        100.0
+      ],
+      "status_counts": {
+        "PASS_INPUT_REJECTED": 15
+      }
+    },
+    "rbac_denied": {
+      "total": 19,
+      "scored": 19,
+      "passed": 19,
+      "failed": 0,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 100.0,
+      "ci95_percent": [
+        83.2,
+        100.0
+      ],
+      "status_counts": {
+        "PASS_RBAC_PERMISSION_DENIED": 19
+      }
+    },
+    "rbac_write_block": {
+      "total": 1,
+      "scored": 1,
+      "passed": 1,
+      "failed": 0,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 100.0,
+      "ci95_percent": [
+        20.7,
+        100.0
+      ],
+      "status_counts": {
+        "PASS_SQL_GUARD_BLOCKED": 1
+      }
+    },
+    "sql_edge_case": {
+      "total": 10,
+      "scored": 10,
+      "passed": 8,
+      "failed": 2,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 80.0,
+      "ci95_percent": [
+        49.0,
+        94.3
+      ],
+      "status_counts": {
+        "PASS_DETERMINISTIC": 4,
+        "PASS_JUDGE_REVIEW": 4,
+        "FAIL_DEEPEVAL": 1,
+        "FAIL_INPUT_CLASSIFICATION": 1
+      }
+    },
+    "sql_guard_edge_case": {
+      "total": 5,
+      "scored": 5,
+      "passed": 5,
+      "failed": 0,
+      "excluded_setup_or_inconclusive": 0,
+      "pass_rate_percent": 100.0,
+      "ci95_percent": [
+        56.6,
+        100.0
+      ],
+      "status_counts": {
+        "PASS_SQL_GUARD_BLOCKED": 5
+      }
+    }
+  },
+  "status_counts": {
+    "PASS_DETERMINISTIC": 62,
+    "PASS_JUDGE_REVIEW": 19,
+    "FAIL_DEEPEVAL": 8,
+    "PASS_RBAC_PERMISSION_DENIED": 19,
+    "PASS_SQL_GUARD_BLOCKED": 6,
+    "PASS_INPUT_REJECTED": 25,
+    "PASS_INCOMPLETE_CLARIFICATION": 10,
+    "FAIL_INPUT_CLASSIFICATION": 1
+  },
+  "important_limitations": [
+    "Single run, one sample per case. Re-run 3x and report the spread; the CIs above show how wide the uncertainty already is.",
+    "Cases excluded for setup errors are NOT passes. Fix the GRANTs or reassign the cases, then re-run.",
+    "The judge only sees a canonically sorted sample of rows; deterministic equivalence over all rows is the primary signal.",
+    "Use a judge model different from (and ideally stronger than) the generator.",
+    "Does not call graph.invoke(); does not test FastAPI/JWT auth, network boundaries, or cache isolation across users."
+  ]
+}

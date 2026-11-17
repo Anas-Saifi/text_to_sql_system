@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask your data</title>
+<style>
+:root{--bg:#f6f7fa;--surface:#fff;--surface-2:#f0f2f7;--text:#1b1f2a;--muted:#6a7087;--border:#e2e5ee;--accent:#4f46e5;--accent-text:#fff;--accent-soft:#eceeff;--ok:#0f766e;--warn:#92400e;--warn-bg:#fff7ed;--warn-border:#fed7aa;--danger:#b91c1c;--danger-bg:#fef2f2;--danger-border:#fecaca;--info:#1d4ed8;--info-bg:#eff6ff;--info-border:#bfdbfe;--radius:12px}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1016;--surface:#161923;--surface-2:#1e2230;--text:#e7e9f2;--muted:#9aa0b6;--border:#2a2f40;--accent:#8b93ff;--accent-text:#0e1016;--accent-soft:#232848;--ok:#5eead4;--warn:#fbbf24;--warn-bg:#2a2110;--warn-border:#5c4515;--danger:#f87171;--danger-bg:#2a1416;--danger-border:#5f2226;--info:#93c5fd;--info-bg:#14203a;--info-border:#274472}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--border);background:var(--surface);border-radius:9px;padding:7px 13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .15s,border-color .15s}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent);font-weight:600}
+.btn.primary:hover:not(:disabled){filter:brightness(1.07)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.spinner{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#login{min-height:100%;display:grid;place-items:center;padding:24px}
+.login-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;font-size:18px}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--accent);color:var(--accent-text);display:grid;place-items:center;font-weight:700}
+.login-card h1{font-size:22px;margin:22px 0 4px;font-weight:650}
+.login-card label{display:block;font-size:13px;margin:16px 0 6px;color:var(--muted)}
+.login-card input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg)}
+.login-card .btn{width:100%;justify-content:center;margin-top:22px;padding:10px}
+.form-error{margin-top:14px;font-size:13px;color:var(--danger);min-height:18px}
+.demo-tag{margin-top:18px;font-size:12px;text-align:center}
+
+#app{height:100%;display:grid;grid-template-columns:268px 1fr}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;gap:14px;min-height:0}
+.sidebar .btn.primary{justify-content:center}
+.chats{flex:1;overflow:auto;display:flex;flex-direction:column;gap:2px;min-height:0}
+.chats .label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:6px 8px}
+.chat-item{text-align:left;border:0;background:none;padding:8px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.chat-item:hover{background:var(--surface-2)}
+.chat-item.active{background:var(--accent-soft);color:var(--accent);font-weight:550}
+.user-box{border-top:1px solid var(--border);padding-top:14px;display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:650;text-transform:uppercase}
+.user-box .who{flex:1;min-width:0}
+.user-box .who b{display:block;overflow:hidden;text-overflow:ellipsis;font-weight:550}
+.user-box .who span{font-size:12px;color:var(--muted)}
+
+main{display:flex;flex-direction:column;min-height:0;min-width:0}
+#thread{flex:1;overflow:auto;padding:28px 24px 12px;scroll-behavior:smooth}
+.col{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.empty{max-width:640px;margin:9vh auto 0;text-align:center}
+.empty h2{font-size:26px;margin:0 0 8px;font-weight:650}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:22px}
+.chip{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:7px 14px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+
+.msg.user{align-self:flex-end;max-width:80%;background:var(--accent);color:var(--accent-text);padding:10px 15px;border-radius:16px 16px 4px 16px;white-space:pre-wrap;word-break:break-word}
+.msg.assistant{align-self:stretch;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.card.warn{background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn)}
+.card.danger{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger)}
+.card.info{background:var(--info-bg);border-color:var(--info-border);color:var(--info)}
+.card .title{font-weight:650;margin-bottom:2px}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.badge{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.badge.warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-border)}
+.table-wrap{overflow:auto;max-height:380px;border:1px solid var(--border);border-radius:9px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}
+th{position:sticky;top:0;background:var(--surface-2);font-weight:600;z-index:1}
+tr:last-child td{border-bottom:0}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:13px}
+.foot .grow{flex:1}
+details.sql{margin-top:10px;font-size:13px}
+details.sql summary{cursor:pointer;color:var(--muted)}
+details.sql pre{margin:8px 0 0;padding:10px 12px;background:var(--surface-2);border-radius:8px;overflow:auto;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.actions .hint{font-size:13px;color:var(--muted);margin-right:2px}
+.act-err{font-size:13px;color:var(--danger)}
+.panel h3{margin:0 0 8px;font-size:14px;font-weight:650}
+.md p{margin:0 0 8px}.md p:last-child{margin:0}
+.md ul{margin:0 0 8px;padding-left:20px}.md li{margin:2px 0}
+.md code{background:var(--surface-2);padding:1px 5px;border-radius:5px;font-size:.92em}
+.chart-box{position:relative;height:320px}
+.notes{margin-top:8px;font-size:12.5px;color:var(--muted)}
+.stats{margin-top:10px;font-size:13px}.stats summary{cursor:pointer;color:var(--muted)}
+.stats .table-wrap{margin-top:8px;max-height:260px}
+.typing{align-self:flex-start;display:flex;gap:5px;padding:12px 4px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);opacity:.5;animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{50%{opacity:1;transform:translateY(-2px)}}
+
+.composer{padding:8px 24px 20px}
+.composer form{max-width:860px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:8px 8px 8px 16px}
+.composer form:focus-within{border-color:var(--accent)}
+.composer textarea{flex:1;border:0;background:none;resize:none;outline:none;max-height:140px;padding:6px 0;line-height:1.5}
+.composer .btn{border-radius:11px;padding:9px 16px}
+.composer .note{max-width:860px;margin:8px auto 0;text-align:center;font-size:12px;color:var(--muted)}
+.banner{background:var(--warn-bg);color:var(--warn);border-bottom:1px solid var(--warn-border);font-size:13px;text-align:center;padding:5px}
+
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .sidebar{flex-direction:row;align-items:center;padding:10px 12px;border-right:0;border-bottom:1px solid var(--border)}
+  .chats,.user-box .who{display:none}.user-box{border:0;padding:0}
+  .accessbar{padding:8px 12px}
+  #thread{padding:18px 12px 8px}.composer{padding:8px 12px 14px}
+  .msg.user{max-width:92%}
+}
+.login-wrap{display:grid;grid-template-columns:minmax(0,380px) minmax(0,380px);gap:20px;width:100%;max-width:800px;justify-content:center;align-items:start}
+.login-wrap .login-card{max-width:none}
+.creds h2{font-size:16px;margin:0 0 4px;font-weight:650}
+.creds p{margin:0 0 12px;font-size:13px}
+.cred-list{display:flex;flex-direction:column;gap:1px}
+.cred{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:6px 10px;border:0;border-radius:8px;background:none;cursor:pointer;text-align:left}
+.cred:hover{background:var(--accent-soft)}
+.cred code,.tag{font:12.5px ui-monospace,Menlo,Consolas,monospace}
+.cred code{color:var(--muted)}
+.creds .link{display:inline-block;margin-top:14px;font-size:13px;color:var(--accent)}
+a.btn{text-decoration:none}
+.accessbar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 24px;font-size:13px}
+.accessbar .inner{max-width:860px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.accessbar.open .inner{max-height:112px;overflow:auto}
+.accessbar .who-label{color:var(--muted);margin-right:2px}
+.tag{background:var(--surface-2);border-radius:6px;padding:3px 8px}
+button.tag{border:0;cursor:pointer;color:var(--accent);background:var(--accent-soft)}
+.eval{gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.kpi-v{font-size:26px;font-weight:650;line-height:1.2}.kpi.small .kpi-v{font-size:20px}
+.kpi-l{font-size:13px;font-weight:550;margin-top:2px}.kpi-s{font-size:12.5px}
+.rate{display:flex;align-items:center;gap:10px;min-width:160px}.rate span{width:38px;text-align:right;font-variant-numeric:tabular-nums}
+.bar{flex:1;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+tr.total td{font-weight:650}
+@media (max-width:760px){
+  .login-wrap{grid-template-columns:minmax(0,420px)}
+  .sidebar #nav-eval{width:auto;white-space:nowrap}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<section id="login">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="brand"><span class="logo">?</span><span class="app-name">Ask your data</span></div>
+      <h1>Sign in</h1>
+      <p class="muted" style="margin:0">Your role decides which data you can see.</p>
+      <form id="login-form" autocomplete="on">
+        <label for="u">Username</label>
+        <input id="u" name="username" autocomplete="username" required>
+        <label for="p">Password</label>
+        <input id="p" name="password" type="password" autocomplete="current-password" required>
+        <button class="btn primary" id="login-btn" type="submit">Sign in</button>
+        <div class="form-error" id="login-error" role="alert"></div>
+      </form>
+      <div class="demo-tag muted hidden" id="demo-tag">Demo mode: mock data, any password works.</div>
+    </div>
+    <div class="login-card creds">
+      <h2>Demo accounts</h2>
+      <p class="muted">Each account is a database role with its own table access. Click one to fill the form.</p>
+      <div class="cred-list" id="cred-list"></div>
+      <a class="link" href="evaluation_report.pdf" target="_blank" rel="noopener">View the evaluation report (PDF)</a>
+    </div>
+  </div>
+</section>
+
+<div id="app" class="hidden">
+  <aside class="sidebar">
+    <button class="btn primary" id="new-chat" type="button">+ New chat</button>
+    <div class="chats" id="chat-list" aria-label="Chats in this session"></div>
+    <button class="chat-item" id="nav-eval" type="button">Evaluation report</button>
+    <div class="user-box">
+      <div class="avatar" id="avatar"></div>
+      <div class="who"><b id="who-name"></b><span>Signed in</span></div>
+      <button class="btn small" id="logout" type="button">Sign out</button>
+    </div>
+  </aside>
+  <main>
+    <div class="banner hidden" id="demo-banner">Demo mode: showing mock data, not your database.</div>
+    <div class="accessbar" id="accessbar" aria-label="Tables your role can read"></div>
+    <div id="thread" role="log" aria-live="polite"></div>
+    <div class="composer">
+      <form id="composer-form">
+        <label for="input" class="hidden">Ask a question</label>
+        <textarea id="input" rows="1" maxlength="1000" placeholder="Ask a question about your data..."></textarea>
+        <button class="btn primary" id="send" type="submit">Send</button>
+      </form>
+      <div class="note">Answers come from your database through your role's permissions. Check important numbers.</div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+"use strict";
+const APP_NAME = "Ask your data";
+const params = new URLSearchParams(location.search);
+const DEMO = params.has("demo");
+const API = (params.get("api") || "").replace(/\/$/, "");   // "" = same origin (served by FastAPI at /ui)
+const ACTION_LABELS = { summarize: "Summarize", analyze: "Analyze", plot: "Plot" };
+const MAX_TABLE_ROWS = 100;
+
+/* ---------------------------------------------------------------- demo data (portfolio project) */
+const DEMO_USERS = [
+  ["employee", "EmP!7q#29x"], ["hr", "Hr@8V!42pL"], ["department_manager", "Dm#6K@91vQ"], ["finance", "Fn!4R#82mZ"],
+  ["sales", "Sl@9T!35wX"], ["procurement", "Pc#7N@64yB"], ["operations", "Op!3J#85kW"], ["maintenance", "Mt@6P!29zR"],
+  ["quality", "Ql#8H@47nV"], ["project_manager", "Pm!5D#93xK"], ["energy_analyst", "Ea@2F!76qM"], ["executive_readonly", "Er#9W@38bT"],
+];
+// SELECT grants per role (from the database's table privileges). employee and department_manager have no table-level grants on record.
+const ROLE_TABLES = {
+  employee: [], department_manager: [],
+  hr: ["departments", "employee_skills", "employees"],
+  finance: ["budgets", "customers", "departments", "employees", "expenses", "invoices", "payments", "projects"],
+  sales: ["assets", "customer_contacts", "customers", "invoices", "power_plants", "products", "projects"],
+  procurement: ["facilities", "inventory", "parts", "purchase_order_items", "purchase_orders", "shipments", "supplier_contracts", "suppliers"],
+  operations: ["assets", "energy_consumption", "facilities", "generation_records", "manufacturing_plants", "power_plants", "product_components", "production_orders", "products"],
+  maintenance: ["assets", "facilities", "failure_events", "generators", "inspections", "maintenance_history", "maintenance_schedules", "sensor_readings", "transformers", "turbine_performance", "turbines", "work_orders"],
+  quality: ["inspections", "product_components", "production_orders", "products", "quality_inspections"],
+  project_manager: ["customers", "facilities", "project_milestones", "project_resources", "projects", "work_orders"],
+  energy_analyst: ["assets", "emissions_records", "energy_consumption", "facilities", "generation_records", "power_plants", "turbine_performance", "turbines"],
+  executive_readonly: ["assets", "budgets", "customer_contacts", "customers", "departments", "emissions_records", "employee_skills", "employees", "energy_consumption", "expenses", "facilities", "failure_events", "generation_records", "generators", "inspections", "inventory", "invoices", "maintenance_history", "maintenance_schedules", "manufacturing_plants", "parts", "payments", "power_plants", "product_components", "production_orders", "products", "project_milestones", "project_resources", "projects", "purchase_order_items", "purchase_orders", "quality_inspections", "sensor_readings", "shipments", "supplier_contracts", "suppliers", "transformers", "turbine_performance", "turbines", "work_orders"],
+};
+const DEFAULT_QUESTIONS = ["Show me all the employee names", "How many employees are in each department?", "List all departments"];
+const ROLE_QUESTIONS = {
+  hr: ["Show me all the employee names", "How many employees are in each department?", "Which skills are most common?"],
+  finance: ["Total expenses by department", "Which invoices are still unpaid?", "Show budgets by department"],
+  sales: ["Top 5 customers by invoice total", "List all customer contacts", "Which products do we sell?"],
+  procurement: ["Which suppliers have the most purchase orders?", "Show parts with the lowest inventory", "List all supplier contracts"],
+  operations: ["Top 5 products by revenue", "Total energy consumption by facility", "Production quantity by plant"],
+  maintenance: ["How many work orders are open?", "Which turbines had the most failure events?", "Show upcoming maintenance schedules"],
+  quality: ["How many quality inspections per product?", "Show all inspections", "Which products have the most production orders?"],
+  project_manager: ["List all projects", "Show milestones for each project", "Which projects have the most work orders?"],
+  energy_analyst: ["Total energy consumption by facility", "Show emissions by power plant", "Which turbines perform best?"],
+  executive_readonly: ["Top 5 products by revenue", "Total expenses by department", "How many employees are in each department?"],
+};
+// Numbers copied from evaluation_report.pdf (benchmark v2.0, 150 test cases).
+const EVAL = {
+  headline: [
+    ["Overall pass rate", "94.00%", "141 of 150 test cases"],
+    ["Input validation", "99.24%", "131 inputs classified"],
+    ["SQL accuracy, strict", "68.89%", "result matches reference, 90 cases"],
+    ["SQL accuracy, lenient", "90.00%", "also counts LLM-judge approvals"],
+  ],
+  safety: [
+    ["Prompt injection", "15 / 15", "blocked end to end"],
+    ["SQL guard", "6 / 6", "unsafe SQL blocked"],
+    ["Access control", "19 / 19", "denied by the database"],
+  ],
+  categories: [["Aggregation", 20, 20], ["Basic SQL", 20, 19], ["Complex SQL", 15, 12], ["Joins", 25, 22], ["SQL edge cases", 10, 8],
+    ["Incomplete input", 10, 10], ["Invalid input", 10, 10], ["Prompt injection", 15, 15], ["SQL guard edge cases", 5, 5],
+    ["RBAC denied", 19, 19], ["RBAC write block", 1, 1], ["Total", 150, 141]],
+  note: "Strict counts a query as correct only when its result matches the reference. Lenient also counts the 19 of 27 strict failures that an LLM judge (DeepEval GEval) approved. All generated SQL executed successfully; mean generation time was 6.3 seconds.",
+};
+
+const state = {
+  token: sessionStorage.getItem("token"),
+  user: sessionStorage.getItem("user"),
+  chats: [], active: null, busy: false, view: "chat", accessOpen: false,
+};
+
+/* ---------------------------------------------------------------- tiny DOM helper */
+function h(tag, props = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  return el;
+}
+const $ = (id) => document.getElementById(id);
+
+/* ---------------------------------------------------------------- API */
+async function api(path, { method = "GET", body, form, auth = true } = {}) {
+  if (DEMO) return demoApi(path, body);
+  const headers = {};
+  if (auth && state.token) headers.Authorization = "Bearer " + state.token;
+  let payload;
+  if (form) { payload = new URLSearchParams(form); headers["Content-Type"] = "application/x-www-form-urlencoded"; }
+  else if (body) { payload = JSON.stringify(body); headers["Content-Type"] = "application/json"; }
+  const res = await fetch(API + path, { method, headers, body: payload });
+  let data = null;
+  try { data = await res.json(); } catch { /* non-JSON error body */ }
+  if (!res.ok) {
+    const msg = typeof data?.detail === "string" ? data.detail : res.status === 422 ? "That request wasn't valid." : `Request failed (${res.status}).`;
+    const err = new Error(msg); err.status = res.status; err.retryAfter = res.headers.get("Retry-After");
+    throw err;
+  }
+  return data;
+}
+
+/* ---------------------------------------------------------------- auth */
+function showLogin(message = "") {
+  $("app").classList.add("hidden"); $("login").classList.remove("hidden");
+  $("login-error").textContent = message; $("u").focus();
+}
+function showApp() {
+  $("login").classList.add("hidden"); $("app").classList.remove("hidden");
+  $("who-name").textContent = state.user; $("avatar").textContent = (state.user || "?")[0];
+  $("demo-banner").classList.toggle("hidden", !DEMO);
+  state.view = "chat"; renderSidebar(); renderThread(); $("input").focus();
+}
+function logout(message) {
+  sessionStorage.clear(); Object.assign(state, { token: null, user: null, chats: [], active: null, busy: false, view: "chat", accessOpen: false });
+  setComposer(); showLogin(message || "");
+}
+$("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = $("login-btn"); btn.disabled = true; btn.textContent = "Signing in...";
+  $("login-error").textContent = "";
+  try {
+    const username = $("u").value.trim();
+    const data = await api("/auth/login", { method: "POST", form: { username, password: $("p").value }, auth: false });
+    state.token = data.access_token; state.user = username;
+    sessionStorage.setItem("token", state.token); sessionStorage.setItem("user", username);
+    $("p").value = ""; showApp();
+  } catch (err) {
+    $("login-error").textContent = err.status === 429 ? `Too many attempts. Try again in ${err.retryAfter || "a few"} seconds.`
+      : err.status ? err.message : "Can't reach the server.";
+  } finally { btn.disabled = false; btn.textContent = "Sign in"; }
+});
+$("logout").addEventListener("click", () => logout());
+
+/* ---------------------------------------------------------------- formatting helpers */
+const fmt = (v) => typeof v === "number" ? v.toLocaleString(undefined, { maximumFractionDigits: 2 }) : String(v);
+function cell(v) {
+  if (v === null || v === undefined) return h("span", { class: "muted" }, "-");
+  if (typeof v === "number") return fmt(v);
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
+function inline(s) {
+  const out = []; const re = /\*\*(.+?)\*\*|`([^`]+)`/g; let last = 0, m;
+  while ((m = re.exec(s))) {
+    if (m.index > last) out.push(s.slice(last, m.index));
+    out.push(m[1] !== undefined ? h("strong", {}, m[1]) : h("code", {}, m[2]));
+    last = re.lastIndex;
+  }
+  if (last < s.length) out.push(s.slice(last));
+  return out;
+}
+function markdown(src) {            // tiny + XSS-safe: only text nodes, bold, code, bullets
+  const root = h("div", { class: "md" }); let list = null;
+  for (const raw of String(src).split("\n")) {
+    const line = raw.trimEnd();
+    const m = line.match(/^\s*(?:[-*\u2022]|\d+\.)\s+(.*)$/);
+    if (m) { if (!list) { list = h("ul"); root.append(list); } list.append(h("li", {}, inline(m[1]))); continue; }
+    list = null;
+    if (line.trim()) root.append(h("p", {}, inline(line)));
+  }
+  return root;
+}
+function downloadCsv(cols, rows) {
+  const esc = (v) => {
+    if (v === null || v === undefined) return "";
+    let s = typeof v === "object" ? JSON.stringify(v) : String(v);
+    if (typeof v === "string" && /^[=+\-@\t\r]/.test(s)) s = "'" + s;   // spreadsheet formula injection guard
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const csv = [cols.map(esc).join(","), ...rows.map((r) => r.map(esc).join(","))].join("\n");
+  const a = h("a", { href: URL.createObjectURL(new Blob([csv], { type: "text/csv" })), download: "result.csv" });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------------------------------------------------------------- result pieces */
+function tableEl(cols, rows) {
+  const numeric = cols.map((_, i) => rows.some((r) => typeof r[i] === "number") && rows.every((r) => r[i] == null || typeof r[i] === "number"));
+  return h("div", { class: "table-wrap" }, h("table", {},
+    h("thead", {}, h("tr", {}, cols.map((c, i) => h("th", { class: numeric[i] ? "num" : "" }, c)))),
+    h("tbody", {}, rows.slice(0, MAX_TABLE_ROWS).map((r) => h("tr", {}, r.map((v, i) => h("td", { class: numeric[i] ? "num" : "" }, cell(v))))))));
+}
+function statsEl(stats) {
+  const cols = Object.entries(stats?.columns || {});
+  if (!cols.length) return null;
+  const rows = cols.map(([name, s]) => [name, s.type, s.nulls, s.distinct, s.min ?? null, s.max ?? null, s.mean ?? null]);
+  return h("details", { class: "stats" }, h("summary", {}, "Statistics"),
+    tableEl(["column", "type", "nulls", "distinct", "min", "max", "mean"], rows));
+}
+function chartPanel(c) {
+  const canvas = h("canvas", { role: "img", "aria-label": c.title });
+  requestAnimationFrame(() => drawChart(canvas, c));
+  return h("div", { class: "card panel" }, h("h3", {}, c.title || "Chart"),
+    h("div", { class: "chart-box" }, canvas),
+    c.notes?.length ? h("div", { class: "notes" }, c.notes.join(" ")) : null);
+}
+function drawChart(canvas, c) {
+  if (!window.Chart) { canvas.replaceWith(h("p", { class: "muted" }, "Chart library didn't load (check your connection).")); return; }
+  const dark = !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+  const ink = dark ? "#c8cbe0" : "#4a5068", grid = dark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.07)";
+  const palette = ["#6366f1", "#14b8a6", "#f59e0b", "#ef4444", "#8b5cf6", "#0ea5e9", "#84cc16", "#ec4899", "#f97316", "#64748b"];
+  const labels = c.data.map((d) => d.x), values = c.data.map((d) => d.y);
+  let config;
+  if (c.type === "pie") {
+    config = { type: "pie", data: { labels, datasets: [{ data: values, backgroundColor: labels.map((_, i) => palette[i % palette.length]) }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right", labels: { color: ink } } } } };
+  } else {
+    const scales = {
+      x: { title: { display: true, text: c.x_label, color: ink }, ticks: { color: ink, autoSkip: true, maxRotation: 45 }, grid: { color: grid } },
+      y: { title: { display: true, text: c.y_label, color: ink }, ticks: { color: ink }, grid: { color: grid }, beginAtZero: c.type === "bar" },
+    };
+    const data = c.type === "scatter"
+      ? { datasets: [{ label: `${c.y_label} vs ${c.x_label}`, data: c.data.map((d) => ({ x: d.x, y: d.y })), backgroundColor: palette[0] }] }
+      : { labels, datasets: [{ label: c.y_label, data: values, backgroundColor: palette[0], borderColor: palette[0], tension: 0.25, pointRadius: c.data.length > 40 ? 0 : 3 }] };
+    config = { type: c.type, data, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales } };
+  }
+  new Chart(canvas, config);
+}
+
+/* ---------------------------------------------------------------- assistant message */
+function notice(kind, title, text) {
+  return h("div", { class: "card " + kind }, h("div", { class: "title" }, title), text ? h("div", {}, text) : null);
+}
+function renderAssistant(msg) {
+  const wrap = h("div", { class: "msg assistant" });
+  msg.el = wrap;
+  if (msg.error) { wrap.append(notice("danger", "Something went wrong", msg.error)); return wrap; }
+  const r = msg.resp;
+  const text = r.message || "";
+  if (r.status === "denied") wrap.append(notice("warn", "Access denied", text));
+  else if (r.status === "incomplete") wrap.append(notice("info", "I need a bit more detail", text));
+  else if (r.status === "rejected") wrap.append(notice("info", "I can't help with that", text));
+  else if (r.status === "blocked") wrap.append(notice("danger", "Query blocked for safety", text));
+  else if (r.status === "error") {
+    const c = notice("danger", "The query failed", text);
+    if (r.sql) c.append(sqlEl(r.sql)); wrap.append(c);
+  } else {
+    wrap.append(resultCard(msg));
+    if (r.actions?.length) wrap.append(actionBar(msg));
+    for (const a of r.actions || []) {
+      const out = msg.results[a]; if (!out || msg.hidden[a]) continue;
+      if (a === "summarize") wrap.append(h("div", { class: "card panel" }, h("h3", {}, "Summary"), markdown(out.summary)));
+      if (a === "analyze") wrap.append(h("div", { class: "card panel" }, h("h3", {}, "Analysis"), markdown(out.analysis), statsEl(out.stats)));
+      if (a === "plot") wrap.append(chartPanel(out.chart));
+    }
+  }
+  return wrap;
+}
+function sqlEl(sql) {
+  const copy = h("button", { class: "btn small", type: "button" }, "Copy SQL");
+  copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(sql); copy.textContent = "Copied"; } catch { copy.textContent = "Copy failed"; }
+    setTimeout(() => (copy.textContent = "Copy SQL"), 1500);
+  });
+  return h("details", { class: "sql" }, h("summary", {}, "View SQL"), h("pre", {}, sql), copy);
+}
+function resultCard(msg) {
+  const r = msg.resp, cols = r.columns || [], rows = r.rows || [];
+  const card = h("div", { class: "card" });
+  const meta = h("div", { class: "meta" }, h("b", {}, `${rows.length.toLocaleString()}${r.truncated ? "+" : ""} row${rows.length === 1 ? "" : "s"}`));
+  if (r.cache) meta.append(h("span", { class: "badge" }, "From cache"));
+  if (r.corrected) meta.append(h("span", { class: "badge" }, "SQL auto-corrected"));
+  if (r.truncated) meta.append(h("span", { class: "badge warn" }, "Hit the row limit; there is more data"));
+  card.append(meta);
+  if (!rows.length) { card.append(h("div", { class: "muted" }, r.message || "No rows returned.")); return card; }
+  card.append(tableEl(cols, rows));
+  const foot = h("div", { class: "foot" });
+  if (rows.length > MAX_TABLE_ROWS) foot.append(h("span", { class: "muted" }, `Showing the first ${MAX_TABLE_ROWS} rows.`));
+  foot.append(h("span", { class: "grow" }), h("button", { class: "btn small", type: "button", onclick: () => downloadCsv(cols, rows) }, "Download CSV"));
+  card.append(foot);
+  if (r.sql) card.append(sqlEl(r.sql));
+  return card;
+}
+function actionBar(msg) {
+  const bar = h("div", { class: "actions" }, h("span", { class: "hint" }, "Do more with this result:"));
+  for (const a of msg.resp.actions) {
+    const done = !!msg.results[a], busy = !!msg.busy[a];
+    bar.append(h("button", {
+      class: "btn small" + (done && !msg.hidden[a] ? " active" : ""), type: "button", disabled: busy || null, "aria-busy": busy || null,
+      onclick: () => runAction(msg, a),
+    }, busy ? h("span", { class: "spinner" }) : null, ACTION_LABELS[a] || a));
+    if (msg.errs[a]) bar.append(h("span", { class: "act-err" }, msg.errs[a]));
+  }
+  return bar;
+}
+function rerender(msg) {
+  const old = msg.el, next = renderAssistant(msg);
+  if (old && old.parentNode) old.replaceWith(next);
+}
+async function runAction(msg, action) {
+  if (msg.results[action]) { msg.hidden[action] = !msg.hidden[action]; return rerender(msg); }
+  if (msg.busy[action]) return;
+  msg.busy[action] = true; delete msg.errs[action]; rerender(msg);
+  try {
+    msg.results[action] = await api(`/results/${encodeURIComponent(msg.resp.result_id)}/${action}`, { method: "POST" });
+  } catch (e) {
+    if (e.status === 401) return logout("Your session expired. Please sign in again.");
+    msg.errs[action] = e.status === 404 ? "This result expired. Ask the question again."
+      : e.status === 429 ? `Too many requests. Retry in ${e.retryAfter || "a few"}s.` : e.message;
+  } finally { msg.busy[action] = false; rerender(msg); }
+}
+
+/* ---------------------------------------------------------------- chats / thread */
+const activeChat = () => state.chats.find((c) => c.id === state.active);
+function renderSidebar() {
+  const list = $("chat-list"); list.replaceChildren();
+  if (state.chats.length) list.append(h("div", { class: "label" }, "This session"));
+  for (const c of [...state.chats].reverse())
+    list.append(h("button", { class: "chat-item" + (c.id === state.active && state.view === "chat" ? " active" : ""), type: "button", title: c.title,
+      onclick: () => { state.active = c.id; state.view = "chat"; renderSidebar(); renderThread(); } }, c.title));
+  $("nav-eval").classList.toggle("active", state.view === "eval");
+}
+function renderAccessBar() {
+  const bar = $("accessbar"), tables = ROLE_TABLES[state.user] || [], LIMIT = 8;
+  bar.classList.toggle("hidden", state.view !== "chat");
+  bar.classList.toggle("open", state.accessOpen);
+  const inner = h("div", { class: "inner" });
+  if (!tables.length) {
+    inner.append(h("span", { class: "who-label" }, `${state.user}: no table-level grants on record for this role.`));
+  } else {
+    inner.append(h("span", { class: "who-label" }, `${state.user} can read ${tables.length} table${tables.length === 1 ? "" : "s"}:`));
+    for (const t of state.accessOpen ? tables : tables.slice(0, LIMIT)) inner.append(h("span", { class: "tag" }, t));
+    if (tables.length > LIMIT)
+      inner.append(h("button", { class: "tag", type: "button", onclick: () => { state.accessOpen = !state.accessOpen; renderAccessBar(); } },
+        state.accessOpen ? "show less" : `+${tables.length - LIMIT} more`));
+  }
+  bar.replaceChildren(inner);
+}
+function emptyState() {
+  const qs = ROLE_QUESTIONS[state.user] || DEFAULT_QUESTIONS;
+  return h("div", { class: "empty" }, h("h2", {}, "What would you like to know?"),
+    h("p", { class: "muted" }, "Ask a question in plain English. You'll see exactly the data your role is allowed to read."),
+    h("div", { class: "chips" }, qs.map((q) => h("button", { class: "chip", type: "button", onclick: () => send(q) }, q))));
+}
+function evalPage() {
+  const kpi = ([label, value, sub], small) => h("div", { class: "kpi" + (small ? " small" : "") },
+    h("div", { class: "kpi-v" }, value), h("div", { class: "kpi-l" }, label), h("div", { class: "kpi-s muted" }, sub));
+  const rows = EVAL.categories.map(([name, total, passed]) => {
+    const pct = (passed / total) * 100;
+    return h("tr", { class: name === "Total" ? "total" : "" }, h("td", {}, name), h("td", { class: "num" }, `${passed} / ${total}`),
+      h("td", {}, h("div", { class: "rate" }, h("div", { class: "bar" }, h("i", { style: `width:${pct}%` })), h("span", {}, Math.round(pct) + "%"))));
+  });
+  return h("div", { class: "col eval" },
+    h("div", {}, h("h2", { style: "margin:0 0 4px;font-size:22px" }, "Evaluation report"),
+      h("p", { class: "muted", style: "margin:0" }, "Text-to-SQL benchmark v2.0: 150 test cases covering SQL quality, input safety and access control.")),
+    h("div", { class: "kpis" }, EVAL.headline.map((k) => kpi(k))),
+    h("div", { class: "kpis" }, EVAL.safety.map((k) => kpi(k, true))),
+    h("div", { class: "card" }, h("div", { class: "title", style: "margin-bottom:8px" }, "Pass rate by category"),
+      h("div", { class: "table-wrap", style: "max-height:none" }, h("table", {},
+        h("thead", {}, h("tr", {}, h("th", {}, "Category"), h("th", { class: "num" }, "Passed"), h("th", {}, "Pass rate"))), h("tbody", {}, rows)))),
+    h("p", { class: "muted", style: "font-size:13px;margin:0" }, EVAL.note),
+    h("div", {}, h("a", { class: "btn primary", href: "evaluation_report.pdf", target: "_blank", rel: "noopener" }, "Open full report (PDF)")));
+}
+function renderThread() {
+  const t = $("thread"); t.replaceChildren();
+  renderAccessBar();
+  document.querySelector(".composer").classList.toggle("hidden", state.view === "eval");
+  if (state.view === "eval") { t.append(evalPage()); t.scrollTop = 0; return; }
+  const chat = activeChat();
+  if (!chat || !chat.messages.length) { t.append(emptyState()); return; }
+  const col = h("div", { class: "col" }); t.append(col);
+  for (const m of chat.messages) col.append(m.role === "user" ? h("div", { class: "msg user" }, m.text) : renderAssistant(m));
+  t.scrollTop = t.scrollHeight;
+}
+function threadCol() {
+  const t = $("thread");
+  let col = t.querySelector(".col");
+  if (!col) { t.replaceChildren(); col = h("div", { class: "col" }); t.append(col); }
+  return col;
+}
+function pushMessage(chat, msg) {
+  chat.messages.push(msg);
+  if (chat.id !== state.active || state.view !== "chat") return;
+  const el = msg.role === "user" ? h("div", { class: "msg user" }, msg.text) : renderAssistant(msg);
+  threadCol().append(el); $("thread").scrollTop = $("thread").scrollHeight;
+}
+function setComposer() {
+  $("send").disabled = state.busy; $("input").disabled = state.busy;
+  $("send").textContent = state.busy ? "Thinking..." : "Send";
+  if (!state.busy && !$("app").classList.contains("hidden")) $("input").focus();
+}
+function errorText(e) {
+  if (e.status === 429) return `You're sending requests too fast. Try again in ${e.retryAfter || "a few"} seconds.`;
+  if (e.status) return e.message;
+  return "Couldn't reach the server. Check that the API is running.";
+}
+async function send(text) {
+  text = String(text || "").trim();
+  if (!text || state.busy) return;
+  let chat = activeChat();
+  if (!chat) {
+    chat = { id: "c" + Date.now(), conv: null, title: text.slice(0, 48), messages: [] };
+    state.chats.push(chat); state.active = chat.id; renderSidebar();
+  }
+  state.busy = true; setComposer();
+  pushMessage(chat, { role: "user", text });
+  const typing = h("div", { class: "typing", "aria-label": "Working" }, h("i"), h("i"), h("i"));
+  if (chat.id === state.active && state.view === "chat") { threadCol().append(typing); $("thread").scrollTop = $("thread").scrollHeight; }
+  try {
+    const resp = await api("/chat", { method: "POST", body: { message: text, ...(chat.conv ? { conversation_id: chat.conv } : {}) } });
+    chat.conv = resp.conversation_id;
+    typing.remove();
+    pushMessage(chat, { role: "assistant", resp, results: {}, hidden: {}, busy: {}, errs: {} });
+  } catch (e) {
+    typing.remove();
+    if (e.status === 401) { logout("Your session expired. Please sign in again."); return; }
+    pushMessage(chat, { role: "assistant", error: errorText(e) });
+  } finally { state.busy = false; setComposer(); }
+}
+
+$("composer-form").addEventListener("submit", (e) => { e.preventDefault(); const v = $("input").value; $("input").value = ""; autosize(); send(v); });
+$("input").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("composer-form").requestSubmit(); } });
+$("input").addEventListener("input", autosize);
+function autosize() { const t = $("input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 140) + "px"; }
+$("nav-eval").addEventListener("click", () => { state.view = "eval"; renderSidebar(); renderThread(); });
+$("new-chat").addEventListener("click", () => { state.active = null; state.view = "chat"; renderSidebar(); renderThread(); $("input").focus(); });
+
+/* ---------------------------------------------------------------- demo mode (?demo=1) */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const demoStore = {};
+async function demoApi(path, body) {
+  await sleep(500);
+  if (path === "/auth/login") return { access_token: "demo", token_type: "bearer", expires_in: 3600 };
+  if (path === "/auth/me") return { username: state.user };
+  if (path === "/chat") {
+    const q = body.message.toLowerCase(), base = { conversation_id: body.conversation_id || "demo-conv", truncated: false, actions: [], cache: null, corrected: false };
+    if (/delete|drop|update|insert/.test(q)) return { ...base, status: "rejected", message: "I can only read data, not change it." };
+    if (/salar|password/.test(q)) return { ...base, status: "denied", message: "You don't have permission to access the data this question needs." };
+    if (/revenue|product|categor/.test(q)) {
+      const id = "demo-revenue-0001"; demoStore[id] = "revenue";
+      return { ...base, status: "success", sql: "SELECT p.product_category, SUM(po.quantity * p.unit_price) AS revenue\nFROM production_orders po JOIN products p ON p.product_id = po.product_id\nGROUP BY 1 ORDER BY 2 DESC;",
+        columns: ["category", "revenue"], rows: [["Pumps", 182400.5], ["Valves", 151220], ["Sensors", 98750.25], ["Actuators", 64310], ["Filters", 30290.75]], result_id: id, actions: ["summarize", "analyze", "plot"] };
+    }
+    const id = "demo-people-0001"; demoStore[id] = "people";
+    return { ...base, status: "success", cache: "exact", sql: "SELECT first_name, last_name, job_title FROM employees;",
+      columns: ["first_name", "last_name", "job_title"], rows: [["Ana", "Lee", "Engineer"], ["Raj", "Shah", "Analyst"], ["Mia", "Chen", "Technician"], ["Omar", "Diaz", "Planner"], ["Sara", "Khan", "Engineer"], ["Leo", "Park", "Buyer"]],
+      result_id: id, actions: ["summarize", "analyze"] };
+  }
+  const m = path.match(/^\/results\/([^/]+)\/(\w+)$/);
+  if (m && demoStore[m[1]]) {
+    const rev = demoStore[m[1]] === "revenue", a = m[2];
+    if (a === "summarize") return { result_id: m[1], action: a, summary: rev ? "Pumps lead with 182,400.50 in revenue, followed by Valves at 151,220. Together the top two categories bring in about 63% of the 526,971.50 total, while Filters trail at 30,290.75." : "Six employees were returned, working in five different roles. Engineer is the only title that appears more than once." };
+    if (a === "analyze") return { result_id: m[1], action: a, analysis: rev
+      ? "**Key findings**\n- Revenue is concentrated: Pumps and Valves make up most of the total.\n- The smallest category, Filters, earns about 17% of the largest.\n**Patterns & outliers**\n- None notable.\n**Caveats**\n- Only five categories, so percentages move a lot with small changes.\n**Suggested follow-ups**\n- How has revenue per category changed month by month?\n- Which products drive Pumps revenue?"
+      : "**Key findings**\n- Six employees across five distinct job titles.\n**Patterns & outliers**\n- Engineer appears twice; every other title once.\n**Caveats**\n- Small result, so no trends can be drawn.\n**Suggested follow-ups**\n- How many employees are in each department?",
+      stats: { row_count: rev ? 5 : 6, columns: rev ? { category: { type: "text", nulls: 0, distinct: 5 }, revenue: { type: "number", nulls: 0, distinct: 5, min: 30290.75, max: 182400.5, mean: 105394.3 } }
+        : { first_name: { type: "text", nulls: 0, distinct: 6 }, last_name: { type: "text", nulls: 0, distinct: 6 }, job_title: { type: "text", nulls: 0, distinct: 5 } } } };
+    if (a === "plot") return { result_id: m[1], action: a, chart: { type: "bar", title: "Revenue by category", x_label: "category", y_label: "revenue", notes: [],
+      data: [{ x: "Pumps", y: 182400.5 }, { x: "Valves", y: 151220 }, { x: "Sensors", y: 98750.25 }, { x: "Actuators", y: 64310 }, { x: "Filters", y: 30290.75 }] } };
+  }
+  const err = new Error("Result not found or expired. Ask the question again."); err.status = 404; throw err;
+}
+
+/* ---------------------------------------------------------------- boot */
+document.title = APP_NAME;
+document.querySelectorAll(".app-name").forEach((n) => (n.textContent = APP_NAME));
+if (DEMO) $("demo-tag").classList.remove("hidden");
+(function renderCreds() {
+  for (const [role, pw] of DEMO_USERS)
+    $("cred-list").append(h("button", { class: "cred", type: "button",
+      onclick: () => { $("u").value = role; $("p").value = pw; $("login-btn").focus(); } }, h("span", {}, role), h("code", {}, pw)));
+})();
+(async function boot() {
+  if (!state.token) return showLogin();
+  try { await api("/auth/me"); showApp(); }
+  catch (e) { if (e.status) showLogin("Please sign in again."); else showLogin("Can't reach the server."); }
+})();
+</script>
+</body>
+</html>
