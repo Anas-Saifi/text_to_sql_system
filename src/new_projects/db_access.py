@@ -21,6 +21,7 @@ import re
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from sqlalchemy import create_engine, text
+from sqlalchemy.pool import NullPool
 
 log = logging.getLogger(__name__)
 
@@ -38,12 +39,15 @@ def is_access_error(result) -> bool:
 
 
 _ROLE_RE = re.compile(r"^[a-z_][a-z0-9_]{0,62}$")
-MAX_ROWS = int(os.environ["DB_MAX_ROWS"])
-STATEMENT_TIMEOUT = os.environ["DB_STATEMENT_TIMEOUT"]
+MAX_ROWS = int(os.getenv("DB_MAX_ROWS", 500))
+STATEMENT_TIMEOUT = os.getenv("DB_STATEMENT_TIMEOUT", "15s")
 
 # Cloud Run + Cloud SQL socket example:
 # postgresql+psycopg2://app_login:PASS@/dbname?host=/cloudsql/PROJECT:REGION:INSTANCE
-engine = create_engine(os.environ["DATABASE_URL"], pool_size=5, max_overflow=5, pool_pre_ping=True)
+if os.getenv("VERCEL"):  # serverless: don't hold connections per instance; Neon's pooler endpoint pools for us
+    engine = create_engine(os.environ["DATABASE_URL"], poolclass=NullPool)
+else:
+    engine = create_engine(os.environ["DATABASE_URL"], pool_size=5, max_overflow=5, pool_pre_ping=True)
 
 
 def _jsonable(v):

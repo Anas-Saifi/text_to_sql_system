@@ -3,6 +3,7 @@ import re
 import zlib
 import json
 import logging
+from pathlib import Path
 
 import sqlglot
 from sqlglot import exp
@@ -28,11 +29,11 @@ log = logging.getLogger(__name__)
 # ----------------------------------------------------------------------------
 # Config (all overridable via env)
 # ----------------------------------------------------------------------------
-CACHE_ENABLED = os.environ["CACHE_ENABLED"]
-HISTORY_TURNS = int(os.environ["HISTORY_TURNS"])              # past user turns sent to LLMs
-HISTORY_RESULT_CHARS = int(os.environ["HISTORY_RESULT_CHARS"])   # tool output kept in history
-RESULT_CHARS_FOR_EVAL = int(os.environ["RESULT_CHARS_FOR_EVAL"])  # result preview for evaluator
-KEEP_MESSAGES = int(os.environ["KEEP_MESSAGES"])             # messages kept in checkpointer state
+CACHE_ENABLED = os.getenv("CACHE_ENABLED", "true").lower() == "true"
+HISTORY_TURNS = int(os.getenv("HISTORY_TURNS", 3))              # past user turns sent to LLMs
+HISTORY_RESULT_CHARS = int(os.getenv("HISTORY_RESULT_CHARS", 300))   # tool output kept in history
+RESULT_CHARS_FOR_EVAL = int(os.getenv("RESULT_CHARS_FOR_EVAL", 3000))  # result preview for evaluator
+KEEP_MESSAGES = int(os.getenv("KEEP_MESSAGES", 12))             # messages kept in checkpointer state
 
 # ----------------------------------------------------------------------------
 # Tools + schema
@@ -42,7 +43,7 @@ tools = [sql_db_query]
 tool_node = ToolNode(tools)
 sql_tool = sql_db_query
 
-with open("src/new_projects/database_schema.json", "r", encoding="utf-8") as file:
+with open(Path(__file__).with_name("database_schema.json"), "r", encoding="utf-8") as file:
     raw_schema = json.load(file)
 
 

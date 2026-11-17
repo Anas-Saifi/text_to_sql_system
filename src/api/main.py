@@ -33,7 +33,7 @@ from .rate_limit import rate_limited_user
 from .results_store import ResultStore
 
 log = logging.getLogger(__name__)
-DEBUG = os.environ["true"]  # include DB error + SQL in "denied"/setup-error responses
+DEBUG = os.getenv("API_DEBUG", "").lower() == "true"  # include DB error + SQL in "denied"/setup-error responses
 
 app = FastAPI(title="Text-to-SQL API", version="1.1.0")
 store = ResultStore(ttl_s=int(os.getenv("RESULT_TTL_SECONDS", 1800)))
@@ -164,7 +164,13 @@ def _build_response(state: dict, conversation_id: str, user: str) -> ChatRespons
 
     columns, rows, truncated = data["columns"], data["rows"], bool(data.get("truncated"))
     available = act.available_actions(columns, rows)
-    result_id = store.put(user, state.get("user_input", ""), sql, columns, rows, truncated) if available else None
+    result_id = None
+    if available:
+        try:
+            result_id = store.put(user, state.get("user_input", ""), sql, columns, rows, truncated)
+        except Exception:  # the answer is still good; just don't offer actions
+            log.exception("could not store result for user=%s; actions disabled", user)
+            available = []
     return ChatResponse(
         **base,
         status="success",
@@ -208,7 +214,11 @@ def run_action(
     result_id: str = Path(pattern=r"^[A-Za-z0-9_-]{8,64}$"),
     user: str = Depends(rate_limited_user),
 ):
-    entry = store.get(user, result_id)  # owner-only; someone else's id looks like "not found"
+    try:
+        entry = store.get(user, result_id)  # owner-only; someone else's id looks like "not found"
+    except Exception:
+        log.exception("result store unavailable (user=%s)", user)
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Results are temporarily unavailable. Please retry.")
     if entry is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Result not found or expired. Ask the question again.")
     if action.value not in act.available_actions(entry.columns, entry.rows):
@@ -227,6 +237,10 @@ def run_action(
         except Exception:
             log.exception("action %s failed for user=%s", action.value, user)
             raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "The model is temporarily unavailable. Please retry.")
+        try:
+            store.save_output(entry.id, action.value, entry.outputs[action.value])
+        except Exception:  # best effort: the client still gets the answer
+            log.exception("could not persist %s output", action.value)
     return ActionResponse(result_id=result_id, action=action, **entry.outputs[action.value])
 
 
@@ -235,8 +249,9 @@ def health():
     return {"status": "ok"}
 
 
-# ---------------------------------------------------------------- prototype UI
-# Served from the same origin as the API at /ui/ (so no CORS setup is needed). Add ?demo=1 for mock data.
-_FRONTEND = FsPath(__file__).resolve().parents[2] / "frontend"
-if _FRONTEND.is_dir():
-    app.mount("/ui", StaticFiles(directory=_FRONTEND, html=True), name="ui")
+# ---------------------------------------------------------------- UI
+# On Vercel, public/ is served by the CDN at the site root (don't mount it). Locally, serve it from the app
+# so `uvicorn src.api.main:app` also gives you the UI at http://localhost:8000/ . Add ?demo=1 for mock data.
+_PUBLIC = FsPath(__file__).resolve().parents[2] / "public"
+if not os.getenv("VERCEL") and _PUBLIC.is_dir():
+    app.mount("/", StaticFiles(directory=_PUBLIC, html=True), name="public")  # keep last: routes above win
