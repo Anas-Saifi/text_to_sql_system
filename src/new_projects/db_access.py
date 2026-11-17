@@ -44,10 +44,23 @@ STATEMENT_TIMEOUT = os.getenv("DB_STATEMENT_TIMEOUT", "15s")
 
 # Cloud Run + Cloud SQL socket example:
 # postgresql+psycopg2://app_login:PASS@/dbname?host=/cloudsql/PROJECT:REGION:INSTANCE
+def _database_url() -> str:
+    """Always use the psycopg 3 driver. (SQLAlchemy 2.0 defaults plain postgresql:// to psycopg2, 2.1 to psycopg 3;
+    pinning it makes local and Vercel behave identically.)"""
+    url = os.environ["DATABASE_URL"].strip()
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url  # already names a driver explicitly
+
+
+_URL = _database_url()
+# Never auto-prepare statements: prepared statements break behind PgBouncer-style poolers such as Neon's -pooler host.
+_CONNECT_ARGS = {"prepare_threshold": None} if _URL.startswith("postgresql+psycopg://") else {}
 if os.getenv("VERCEL"):  # serverless: don't hold connections per instance; Neon's pooler endpoint pools for us
-    engine = create_engine(os.environ["DATABASE_URL"], poolclass=NullPool)
+    engine = create_engine(_URL, poolclass=NullPool, connect_args=_CONNECT_ARGS)
 else:
-    engine = create_engine(os.environ["DATABASE_URL"], pool_size=5, max_overflow=5, pool_pre_ping=True)
+    engine = create_engine(_URL, pool_size=5, max_overflow=5, pool_pre_ping=True, connect_args=_CONNECT_ARGS)
 
 
 def _jsonable(v):
@@ -64,6 +77,11 @@ def _short(exc: Exception) -> str:
     """First line of the Postgres error only (no echoed SQL, parameters or SQLAlchemy links)."""
     msg = str(getattr(exc, "orig", None) or exc).strip()
     return msg.splitlines()[0] if msg else type(exc).__name__
+
+
+def _sqlstate(exc: Exception):
+    orig = getattr(exc, "orig", None)  # psycopg 3 exposes .sqlstate, psycopg2 exposes .pgcode
+    return getattr(orig, "sqlstate", None) or getattr(orig, "pgcode", None)
 
 
 def run_query_as(role: str, query: str) -> str:
@@ -94,7 +112,7 @@ def run_query_as(role: str, query: str) -> str:
         if stage == "setup":
             log.error("DB setup failed for role %r: %s", role, exc)
             return f"{SETUP_ERROR_PREFIX} (role {role!r}): {_short(exc)}"
-        if getattr(getattr(exc, "orig", None), "pgcode", None) == "42501":
+        if _sqlstate(exc) == "42501":
             log.warning("access denied | role=%s | %s | sql=%s", role, _short(exc), query[:500])
             return f"{PERMISSION_ERROR_PREFIX}: {_short(exc)}"
         return f"Error: {_short(exc)}"  # syntax error, missing column, timeout ...
