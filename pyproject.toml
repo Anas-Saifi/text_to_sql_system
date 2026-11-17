@@ -19,6 +19,7 @@ dependencies = [
     "pandas>=3.1.1",
     "pydantic",
     "psycopg2-binary>=2.9.13",
+    "psycopg[binary]>=3.3.9",
     "pyjwt>=2.15.1",
     "python-dotenv>=1.2.4",
     "python-multipart>=0.0.33",
@@ -30,7 +31,6 @@ dependencies = [
 dev = [
     "deepeval>=2.9.3",
     "fastembed>=0.9.1",
-    "psycopg[binary]>=3.3.9",
     "sentencepiece>=0.2.3",
     "torch>=2.15.0",
     "transformers>=5.22.2",
